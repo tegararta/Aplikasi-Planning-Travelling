@@ -8,7 +8,7 @@ const Tab = createBottomTabNavigator();
 
 const colorHeader = {
   headerStyle: {
-    backgroundColor: "#FFC700",
+    backgroundColor: "#55B3EF", // Warna biru
   },
   headerTintColor: "#000000",
   headerTitleStyle: {
@@ -27,7 +27,7 @@ const NavTabs = () => {
   return (
     <Tab.Navigator
       tabBarOptions={{
-        activeTintColor: "#FFC700",
+        activeTintColor: "#217FBB", // Warna biru
         inactiveTintColor: "#000000",
       }}
     >
@@ -43,18 +43,18 @@ const NavTabs = () => {
         name="History"
         component={History}
         options={{
-            ...colorHeader,
-            tabBarIcon: (props) => <IconBottom name="document-attach" data={props} />,
+          ...colorHeader,
+          tabBarIcon: (props) => <IconBottom name="document-attach" data={props} />,
         }}
       />
-        <Tab.Screen
-          name="About"
-          component={About}
-          options={{
-            ...colorHeader,
-            tabBarIcon: (props) => <IconBottom name="person" data={props} />,
-          }}
-        />
+      <Tab.Screen
+        name="About"
+        component={About}
+        options={{
+          ...colorHeader,
+          tabBarIcon: (props) => <IconBottom name="person" data={props} />,
+        }}
+      />
     </Tab.Navigator>
   );
 };
