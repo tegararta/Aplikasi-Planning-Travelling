@@ -13,7 +13,7 @@ const biodataList = [
     kelas: 'IF-01-01',
     prodi: 'INFORMATIKA',
     angkatan: '2021',
-    avatarUrl: 'https://github.com/aisyadwi/foto/blob/main/tejo.jpg?raw=true',
+    avatarUrl: 'https://raw.githubusercontent.com/aisyadwi/foto/main/tejo.jpg',
   },
   {
     name: 'EMILIA R',
@@ -29,7 +29,7 @@ const biodataList = [
     kelas: 'IF-01-01',
     prodi: 'INFORMATIKA',
     angkatan: '2021',
-    avatarUrl: 'https://github.com/aisyadwi/foto/blob/main/ade.jpg?raw=true',
+    avatarUrl: 'https://raw.githubusercontent.com/aisyadwi/foto/main/ade.jpg',
   },
   {
     name: 'PANCA A.M',
@@ -37,7 +37,7 @@ const biodataList = [
     kelas: 'IF-01-01',
     prodi: 'INFORMATIKA',
     angkatan: '2021',
-    avatarUrl: 'https://github.com/aisyadwi/foto/blob/main/panca.jpg?raw=true',
+    avatarUrl: 'https://raw.githubusercontent.com/aisyadwi/foto/main/panca.jpg',
   },
   {
     name: 'AISYA DWI A',

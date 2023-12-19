@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Note, About, History } from "../pages";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 const Tab = createBottomTabNavigator();
 
@@ -20,7 +20,7 @@ const IconBottom = (props) => {
   const { color, focused } = props.data;
   let name = focused ? props.name : `${props.name}-outline`;
   let colorSelected = focused ? color : "#000000";
-  return <MaterialIcons name={name} size={28} color={colorSelected} />;
+  return <Ionicons name={name} size={28} color={colorSelected} />;
 };
 
 const NavTabs = () => {
@@ -36,7 +36,7 @@ const NavTabs = () => {
         component={Note}
         options={{
           ...colorHeader,
-          tabBarIcon: (props) => <IconBottom name="home" data={props} />,
+          tabBarIcon: (props) => <IconBottom name="musical-note" data={props} />,
         }}
       />
       <Tab.Screen
