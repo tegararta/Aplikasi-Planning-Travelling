@@ -1,54 +1,47 @@
-// History.jsx
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, StyleSheet, Button } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
 const History = ({ route }) => {
-  const { doneNote } = route.params;
+  const { undoneNote, savedNotes } = route.params;
   const [completedTasks, setCompletedTasks] = useState([]);
   const navigation = useNavigation();
 
   useEffect(() => {
-    if (doneNote) {
-      setCompletedTasks((prevTasks) => [...prevTasks, doneNote]);
+    if (undoneNote) {
+      setCompletedTasks((prevTasks) => [...prevTasks, undoneNote]);
     }
-  }, [doneNote]);
+  }, [undoneNote]);
 
   const getNoteValue = (note, label) => {
     const regex = new RegExp(`${label}: (.+)`);
     const match = note.match(regex);
     return match ? match[1] : '';
   };
-  
+
   const handleDelete = async (index) => {
     const updatedTasks = [...completedTasks];
     const deletedNote = updatedTasks.splice(index, 1)[0];
     setCompletedTasks(updatedTasks);
 
-    // Simpan kembali ke AsyncStorage setelah menghapus
-    saveDataToAsyncStorage(updatedTasks);
+    await saveDataToAsyncStorage(updatedTasks);
 
-    // Untuk memberi kesempatan AsyncStorage menyimpan data sebelum kembali ke laman Note
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Navigasi kembali ke laman Note
     navigation.navigate('Note');
   };
 
-  const handleUndone = async (index, note) => {
-    // Hapus dari completedTasks
+  const handleUndone = async (index) => {
     const updatedTasks = [...completedTasks];
-    updatedTasks.splice(index, 1);
+    const undoneNote = updatedTasks.splice(index, 1)[0];
     setCompletedTasks(updatedTasks);
 
-    // Tambahkan kembali ke savedNotes
     const savedNotes = await getDataFromAsyncStorage('savedNotes');
-    const updatedSavedNotes = [...savedNotes, note];
-    saveDataToAsyncStorage(updatedSavedNotes);
+    const updatedSavedNotes = [...savedNotes, undoneNote];
+    await saveDataToAsyncStorage(updatedSavedNotes);
 
-    // Navigasi kembali ke laman Note
-    navigation.navigate('Note');
+    navigation.navigate('Note', { undoneNote, savedNotes: updatedSavedNotes });
   };
 
   const saveDataToAsyncStorage = async (data) => {
@@ -81,7 +74,7 @@ const History = ({ route }) => {
           <Text style={styles.itemLabel}>Tujuan Travelling:</Text> {tujuanTravelling}
         </Text>
         <Text style={styles.itemList}>
-          <Text style={styles.itemLabel}>Budget:</Text> Rp.{budget}
+          <Text style={styles.itemLabel}>Budget:</Text> {budget}
         </Text>
         <Text style={styles.itemList}>
           <Text style={styles.itemLabel}>Kebutuhan Travelling:</Text> {kebutuhanTravelling}
@@ -97,7 +90,7 @@ const History = ({ route }) => {
           />
           <Button
             title="Undone"
-            onPress={() => handleUndone(index, item)}
+            onPress={() => handleUndone(index)}
             color="#3498db"
           />
         </View>

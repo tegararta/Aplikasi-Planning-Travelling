@@ -11,21 +11,13 @@ const Note = () => {
   const [travelDate, setTravelDate] = useState('');
   const [savedNotes, setSavedNotes] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
-  const [doneNotes, setDoneNotes] = useState([]);
-
-  // Fungsi untuk menavigasi ke laman history
-  const navigateToHistory = (params) => {
-    navigation.navigate('History', params);
-  };
 
   useEffect(() => {
-    // Cek apakah ada data editNote dari properti route.params
-    const { editNote, editIndex } = route.params || {};
-    if (editNote && editIndex !== undefined) {
-      // Mengisi state dengan data dari editNote
-      const noteParts = editNote.split('\n');
+    const { undoneNote } = route.params || {};
+    if (undoneNote) {
+      const noteParts = undoneNote.split('\n');
       const destination = noteParts[0].split(': ')[1];
-      const budgetValue = noteParts[1].split(': Rp.')[1];
+      const budgetValue = noteParts[1].split(': ')[1];
       const needs = noteParts[2].split(': ')[1];
       const date = noteParts[3].split(': ')[1];
 
@@ -33,20 +25,18 @@ const Note = () => {
       setBudget(budgetValue);
       setTravelNeeds(needs);
       setTravelDate(date);
-      setEditIndex(editIndex);
+      setEditIndex(null);
     }
   }, [route.params]);
-
-  const overallBackgroundColor = '#2793D8';
 
   const handleSaveNote = () => {
     if (editIndex !== null) {
       const editedNotes = [...savedNotes];
-      editedNotes[editIndex] = `Tujuan Travelling: ${travelDestination}\nBudget: Rp.${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
+      editedNotes[editIndex] = `Tujuan Travelling: ${travelDestination}\nBudget: ${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
       setSavedNotes(editedNotes);
       setEditIndex(null);
     } else {
-      const note = `Tujuan Travelling: ${travelDestination}\nBudget: Rp.${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
+      const note = `Tujuan Travelling: ${travelDestination}\nBudget: ${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
       setSavedNotes([...savedNotes, note]);
     }
 
@@ -60,7 +50,7 @@ const Note = () => {
     const noteToEdit = savedNotes[index];
     const noteParts = noteToEdit.split('\n');
     const destination = noteParts[0].split(': ')[1];
-    const budgetValue = noteParts[1].split(': $')[1];
+    const budgetValue = noteParts[1].split(': ')[1];
     const needs = noteParts[2].split(': ')[1];
     const date = noteParts[3].split(': ')[1];
 
@@ -71,8 +61,17 @@ const Note = () => {
     setEditIndex(index);
   };
 
+  const getNoteValue = (note, label) => {
+    const regex = new RegExp(`${label}: (.+)`);
+    const match = note.match(regex);
+    return match ? match[1] : '';
+  };
+
+  const handleUndone = (index, note) => {
+    navigation.navigate('History', { undoneNote: note, savedNotes });
+  };
+
   const formatCurrency = (value) => {
-    // Format angka ke format mata uang Rupiah
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
@@ -80,44 +79,16 @@ const Note = () => {
     }).format(value);
   };
 
-  const getNoteValue = (note, label) => {
-    const regex = new RegExp(`${label}: (.+)`);
-    const match = note.match(regex);
-    return match ? match[1] : '';
-  };
-
   const NoteRow = ({ label, value }) => (
     <View style={styles.noteRow}>
       <Text style={styles.noteLabel}>{label}:</Text>
       {label === 'Budget' ? (
-        <Text style={styles.noteValue}>{value.includes('') ? value : `Rp.${value}`}</Text>
+        <Text style={styles.noteValue}>{value.includes('') ? value : formatCurrency(value)}</Text>
       ) : (
         <Text style={styles.noteValue}>{value}</Text>
       )}
     </View>
   );
-  
-
-  const handleUndone = (index, note) => {
-    // Hapus dari doneNotes
-    const updatedDoneNotes = [...doneNotes];
-    updatedDoneNotes.splice(index, 1);
-    setDoneNotes(updatedDoneNotes);
-  
-    // Tambahkan kembali ke savedNotes
-    setSavedNotes((prevNotes) => [...prevNotes, note]);
-  
-    // Navigasi kembali ke laman Note
-    navigation.navigate('Note');
-  };
-  const handleDoneNote = (index) => {
-    const editedNotes = [...savedNotes];
-    const deletedNote = editedNotes.splice(index, 1)[0];
-    setSavedNotes(editedNotes);
-
-    // Navigasi ke layar history dengan menyertakan data doneNote
-    navigateToHistory({ doneNote: deletedNote });
-  };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -135,7 +106,7 @@ const Note = () => {
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Budget (Rp.)</Text>
+          <Text style={styles.inputLabel}>Budget </Text>
           <TextInput
             style={[styles.input, { backgroundColor: 'white' }]}
             placeholder="Rp."
@@ -183,7 +154,7 @@ const Note = () => {
                     <Button title="Edit" onPress={() => handleEditNote(index)} color="#3498db" />
                   </View>
                   <View style={styles.noteButton}>
-                    <Button title="Done" onPress={() => handleDoneNote(index)} color="#e74c3c" />
+                    <Button title="Done" onPress={() => handleUndone(index, item)} color="#e74c3c" />
                   </View>
                 </View>
               </View>
@@ -198,7 +169,7 @@ const Note = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#ecf0f1',
+    backgroundColor: '#8DCBF4',
     overallBackgroundColor: '#2793D8',
     borderRadius: 10,
     margin: 20,
@@ -251,17 +222,11 @@ const styles = StyleSheet.create({
   noteLabel: {
     fontWeight: 'bold',
     marginRight: 5,
-    width: 120, // Sesuaikan lebar label sesuai kebutuhan
+    width: 120,
   },
   noteValue: {
     flex: 1,
     color: '#2c3e50',
-  },
-  separator: {
-    width: 1,
-    height: '100%',
-    backgroundColor: '#bdc3c7',
-    marginHorizontal: 5,
   },
   notesTitle: {
     fontSize: 20,
@@ -276,14 +241,26 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
   },
-  noteText: {
-    fontSize: 16,
-    color: '#2c3e50',
-    marginBottom: 10,
-  },
   noteButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+
+  doneNotesContainer: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#bdc3c7',
+    paddingTop: 10,
+  },
+  doneNotesTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#e74c3c',
+    marginBottom: 10,
+  },
+
+  noteButton: {
+    width: '48%', // Sesuaikan lebar sesuai kebutuhan
   },
 });
 
