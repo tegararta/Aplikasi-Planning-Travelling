@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, Button, ScrollView, FlatList } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, ScrollView, FlatList, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 const Note = () => {
@@ -31,44 +31,93 @@ const Note = () => {
 
   const handleSaveNote = () => {
     if (editIndex !== null) {
-      const editedNotes = [...savedNotes];
-      editedNotes[editIndex] = `Tujuan Travelling: ${travelDestination}\nBudget: ${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
-      setSavedNotes(editedNotes);
-      setEditIndex(null);
+      Alert.alert(
+        'Update Note',
+        'Apakah Anda yakin ingin mengupdate catatan ini?',
+        [
+          {
+            text: 'Batal',
+            style: 'cancel',
+          },
+          {
+            text: 'Update',
+            onPress: () => {
+              const editedNotes = [...savedNotes];
+              editedNotes[editIndex] = `Tujuan Travelling: ${travelDestination}\nBudget: ${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
+              setSavedNotes(editedNotes);
+              setEditIndex(null);
+
+              // Reset form fields after updating
+              setTravelDestination('');
+              setBudget('');
+              setTravelNeeds('');
+              setTravelDate('');
+            },
+          },
+        ],
+        { cancelable: true }
+      );
     } else {
       const note = `Tujuan Travelling: ${travelDestination}\nBudget: ${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
       setSavedNotes([...savedNotes, note]);
-    }
 
-    setTravelDestination('');
-    setBudget('');
-    setTravelNeeds('');
-    setTravelDate('');
+      // Reset form fields after saving
+      setTravelDestination('');
+      setBudget('');
+      setTravelNeeds('');
+      setTravelDate('');
+    }
   };
 
   const handleEditNote = (index) => {
-    const noteToEdit = savedNotes[index];
-    const noteParts = noteToEdit.split('\n');
-    const destination = noteParts[0].split(': ')[1];
-    const budgetValue = noteParts[1].split(': ')[1];
-    const needs = noteParts[2].split(': ')[1];
-    const date = noteParts[3].split(': ')[1];
+    Alert.alert(
+      'Edit Note',
+      'Apakah Anda yakin akan mengedit?',
+      [
+        {
+          text: 'Batal',
+          style: 'cancel',
+        },
+        {
+          text: 'Edit',
+          onPress: () => {
+            const noteToEdit = savedNotes[index];
+            const noteParts = noteToEdit.split('\n');
+            const destination = noteParts[0].split(': ')[1];
+            const budgetValue = noteParts[1].split(': ')[1];
+            const needs = noteParts[2].split(': ')[1];
+            const date = noteParts[3].split(': ')[1];
 
-    setTravelDestination(destination);
-    setBudget(budgetValue);
-    setTravelNeeds(needs);
-    setTravelDate(date);
-    setEditIndex(index);
-  };
-
-  const getNoteValue = (note, label) => {
-    const regex = new RegExp(`${label}: (.+)`);
-    const match = note.match(regex);
-    return match ? match[1] : '';
+            setTravelDestination(destination);
+            setBudget(budgetValue);
+            setTravelNeeds(needs);
+            setTravelDate(date);
+            setEditIndex(index);
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const handleUndone = (index, note) => {
-    navigation.navigate('History', { undoneNote: note, savedNotes });
+    Alert.alert(
+      'Selesai Travelling',
+      'Apakah Anda sudah selesai travelling?',
+      [
+        {
+          text: 'Belum',
+          style: 'cancel',
+        },
+        {
+          text: 'Selesai',
+          onPress: () => {
+            navigation.navigate('History', { undoneNote: note, savedNotes });
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const formatCurrency = (value) => {
@@ -89,6 +138,12 @@ const Note = () => {
       )}
     </View>
   );
+
+  const getNoteValue = (note, label) => {
+    const regex = new RegExp(`${label}: (.+)`);
+    const match = note.match(regex);
+    return match ? match[1] : '';
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -245,20 +300,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-
-  doneNotesContainer: {
-    marginTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#bdc3c7',
-    paddingTop: 10,
-  },
-  doneNotesTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#e74c3c',
-    marginBottom: 10,
-  },
-
   noteButton: {
     width: '48%', // Sesuaikan lebar sesuai kebutuhan
   },
