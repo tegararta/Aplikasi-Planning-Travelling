@@ -1,6 +1,8 @@
-import Note from './Note';
-import History from './History';
-import Badget from './Badget';
-import About from './About';
+import Home from "./Home";
+import Note from "./Note";
+import History from "./History";
+import About from "./About";
+import NoteDetail from "./NoteDetail";
+import NoteEdit from "./NoteEdit";
 
-export { Note, History, Badget, About };
+export { Home, Note, History, About, NoteDetail, NoteEdit };

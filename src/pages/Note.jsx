@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, ScrollView, FlatList, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { history } from '../pages';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Note = () => {
@@ -20,16 +19,24 @@ const Note = () => {
 
   const handleSaveNote = async () => {
     const allNotes = await getStorageData();
-    const newNote = `Tujuan Travelling: ${travelDestination}\nBudget: ${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
+    const newNote = {
+      id: editIndex !== null ? allNotes[editIndex].id : new Date().getTime(), // unique ID
+      travel: travelDestination,
+      budget: budget,
+      barang: travelNeeds,
+      ttl: travelDate,
+    };
+  
     let updatedNotes;
-
+  
     if (editIndex !== null) {
       updatedNotes = [...allNotes];
-      updatedNotes[editIndex] = newNote;
+      const noteIndex = updatedNotes.findIndex(note => note.id === newNote.id);
+      updatedNotes[noteIndex] = newNote;
     } else {
-      updatedNotes = [...allNotes, newNote];
+      updatedNotes = [newNote, ...allNotes];
     }
-
+  
     try {
       await AsyncStorage.setItem('@note-list', JSON.stringify(updatedNotes));
       setSavedNotes(updatedNotes);
@@ -39,10 +46,14 @@ const Note = () => {
       setBudget('');
       setTravelNeeds('');
       setTravelDate('');
+      console.log('Data saved: ', JSON.stringify(updatedNotes));
+      navigation.goBack('Home', { updatedNotes });
     } catch (e) {
       console.error('Error saving note: ', e.message);
     }
+    // kembali ke halaman sebelumnya
   };
+  
 
   const handleDeleteNote = async (index) => {
     Alert.alert(
@@ -86,42 +97,25 @@ const Note = () => {
           text: 'Edit',
           onPress: () => {
             const noteToEdit = savedNotes[index];
-            const noteParts = noteToEdit.split('\n');
-            const destination = noteParts[0].split(': ')[1];
-            const budgetValue = noteParts[1].split(': ')[1];
-            const needs = noteParts[2].split(': ')[1];
-            const date = noteParts[3].split(': ')[1];
 
-            setTravelDestination(destination);
-            setBudget(budgetValue);
-            setTravelNeeds(needs);
-            setTravelDate(date);
+            if (typeof noteToEdit === 'string') {
+              const noteParts = noteToEdit.split('\n');
+              setTravelDestination(noteParts[0]);
+              setBudget(noteParts[1]);
+              setTravelNeeds(noteParts[2]);
+              setTravelDate(noteParts[3]);
+            } else {
+              setTravelDestination(noteToEdit.travel);
+              setBudget(noteToEdit.budget);
+              setTravelNeeds(noteToEdit.barang);
+              setTravelDate(noteToEdit.ttl);
+            }
             setEditIndex(index);
           },
         },
       ],
       { cancelable: true }
     );
-  };
-
-  const getTaskList = async () => {
-    const storedNotes = await getStorageData();
-    setSavedNotes(storedNotes);
-  };
-  
-
-  const handleStatusChange = async (item, index) => {
-    const allList = await getStorageData();
-    var tempIndex = allList.findIndex(el => el.title == item.title);
-    allList[tempIndex].isCompleted = !allList[tempIndex].isCompleted;
-    try {
-        AsyncStorage.setItem('@task-list', JSON.stringify(allList));
-        navigation.navigate('History', { completedTask: history });
-        getTaskList();
-    } catch (e) {
-        console.log('Error update status task: in task-all.js');
-        console.error(e.message);
-    }
   };
 
   useEffect(() => {
@@ -132,52 +126,6 @@ const Note = () => {
 
     loadNotes();
   }, []);  
-
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
-
-  const NoteRow = ({ label, value }) => (
-    <View style={styles.noteRow}>
-      <Text style={styles.noteLabel}>{label}:</Text>
-      {label === 'Budget' ? (
-        <Text style={styles.noteValue}>{value.includes('') ? value : formatCurrency(value)}</Text>
-      ) : (
-        <Text style={styles.noteValue}>{value}</Text>
-      )}
-    </View>
-  );
-
-  const getNoteValue = (note, label) => {
-    const regex = new RegExp(`${label}: (.+)`);
-    const match = note.match(regex);
-    return match ? match[1] : '';
-  };
-
-  const renderItem = ({ item, index }) => (
-    <View style={[styles.noteItem, { backgroundColor: 'white' }]}>
-      <NoteRow label="Tujuan Travelling" value={getNoteValue(item, 'Tujuan Travelling')} />
-      <NoteRow label="Budget" value={`${getNoteValue(item, 'Budget')}`} />
-      <NoteRow label="Kebutuhan Travelling" value={getNoteValue(item, 'Kebutuhan Travelling')} />
-      <NoteRow label="Tanggal" value={getNoteValue(item, 'Tanggal')} />
-      <View style={styles.noteButtonsContainer}>
-      <View style={styles.noteButton}>
-        <Button title="Edit" onPress={() => handleEditNote(index)} color="#3498db" />
-      </View>
-      <View style={styles.noteButton}>
-        <Button title="Done" onPress={() => handleStatusChange(index, item)} color="#e74c3c" />
-      </View>
-      <View style={styles.noteButton}>
-        <Button title="Delete" onPress={() => handleDeleteNote(index)} color="#c0392b" />
-      </View>
-    </View>
-    </View>
-  );
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -224,17 +172,7 @@ const Note = () => {
             onChangeText={(text) => setTravelDate(text)}
           />
         </View>
-
         <Button title={editIndex !== null ? 'Update' : 'Save'} onPress={handleSaveNote} color="#3498db" />
-
-        <View style={styles.notesContainer}>
-          <Text style={styles.notesTitle}>Note Travelling Anda</Text>
-          <FlatList
-            data={savedNotes}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={renderItem}
-          />
-        </View>
       </View>
     </ScrollView>
   );

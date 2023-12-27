@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Note, About, History } from "../pages";
+import { Home, About, History, Note} from "../pages";
 import { Ionicons } from "@expo/vector-icons";
 
 const Tab = createBottomTabNavigator();
@@ -32,8 +32,8 @@ const NavTabs = () => {
       }}
     >
       <Tab.Screen
-        name="Plan"
-        component={Note}
+        name="Home"
+        component={Home}
         options={{
           ...colorHeader,
           tabBarIcon: (props) => <IconBottom name="attach" data={props} />,
