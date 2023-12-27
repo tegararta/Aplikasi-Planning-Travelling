@@ -32,11 +32,11 @@ const NavTabs = () => {
       }}
     >
       <Tab.Screen
-        name="Note"
+        name="Plan"
         component={Note}
         options={{
           ...colorHeader,
-          tabBarIcon: (props) => <IconBottom name="musical-note" data={props} />,
+          tabBarIcon: (props) => <IconBottom name="attach" data={props} />,
         }}
       />
       <Tab.Screen

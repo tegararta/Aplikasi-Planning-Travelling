@@ -90,9 +90,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   profileContainer: {
+    marginTop: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 30,
+    marginBottom: 3,
     borderRadius: 15,
     padding: 20,
     elevation: 5,

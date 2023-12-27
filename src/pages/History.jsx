@@ -4,16 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
 const History = ({ route }) => {
-  const { undoneNote, savedNotes } = route.params;
   const [completedTasks, setCompletedTasks] = useState([]);
-  const navigation = useNavigation();
-
-  useEffect(() => {
-    if (undoneNote) {
-      setCompletedTasks((prevTasks) => [...prevTasks, undoneNote]);
-    }
-  }, [undoneNote]);
-
+  
   const getNoteValue = (note, label) => {
     const regex = new RegExp(`${label}: (.+)`);
     const match = note.match(regex);

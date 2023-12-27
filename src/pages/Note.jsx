@@ -1,73 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, ScrollView, FlatList, Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { history } from '../pages';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Note = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
   const [travelDestination, setTravelDestination] = useState('');
   const [budget, setBudget] = useState('');
   const [travelNeeds, setTravelNeeds] = useState('');
   const [travelDate, setTravelDate] = useState('');
   const [savedNotes, setSavedNotes] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
+  const navigation = useNavigation();
 
-  useEffect(() => {
-    const { undoneNote } = route.params || {};
-    if (undoneNote) {
-      const noteParts = undoneNote.split('\n');
-      const destination = noteParts[0].split(': ')[1];
-      const budgetValue = noteParts[1].split(': ')[1];
-      const needs = noteParts[2].split(': ')[1];
-      const date = noteParts[3].split(': ')[1];
+  const getStorageData = async () => {
+    const value = await AsyncStorage.getItem('@note-list');
+    return value ? JSON.parse(value) : [];
+  };
 
-      setTravelDestination(destination);
-      setBudget(budgetValue);
-      setTravelNeeds(needs);
-      setTravelDate(date);
-      setEditIndex(null);
-    }
-  }, [route.params]);
+  const handleSaveNote = async () => {
+    const allNotes = await getStorageData();
+    const newNote = `Tujuan Travelling: ${travelDestination}\nBudget: ${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
+    let updatedNotes;
 
-  const handleSaveNote = () => {
     if (editIndex !== null) {
-      Alert.alert(
-        'Update Note',
-        'Apakah Anda yakin ingin mengupdate catatan ini?',
-        [
-          {
-            text: 'Batal',
-            style: 'cancel',
-          },
-          {
-            text: 'Update',
-            onPress: () => {
-              const editedNotes = [...savedNotes];
-              editedNotes[editIndex] = `Tujuan Travelling: ${travelDestination}\nBudget: ${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
-              setSavedNotes(editedNotes);
-              setEditIndex(null);
-
-              // Reset form fields after updating
-              setTravelDestination('');
-              setBudget('');
-              setTravelNeeds('');
-              setTravelDate('');
-            },
-          },
-        ],
-        { cancelable: true }
-      );
+      updatedNotes = [...allNotes];
+      updatedNotes[editIndex] = newNote;
     } else {
-      const note = `Tujuan Travelling: ${travelDestination}\nBudget: ${budget}\nKebutuhan Travelling: ${travelNeeds}\nTanggal: ${travelDate}`;
-      setSavedNotes([...savedNotes, note]);
+      updatedNotes = [...allNotes, newNote];
+    }
 
-      // Reset form fields after saving
+    try {
+      await AsyncStorage.setItem('@note-list', JSON.stringify(updatedNotes));
+      setSavedNotes(updatedNotes);
+      setEditIndex(null);
+      // Reset form fields
       setTravelDestination('');
       setBudget('');
       setTravelNeeds('');
       setTravelDate('');
+    } catch (e) {
+      console.error('Error saving note: ', e.message);
     }
   };
+
+  const handleDeleteNote = async (index) => {
+    Alert.alert(
+      'Hapus Catatan',
+      'Apakah Anda yakin ingin menghapus catatan ini?',
+      [
+        {
+          text: 'Batal',
+          style: 'cancel',
+        },
+        {
+          text: 'Hapus',
+          onPress: async () => {
+            const updatedNotes = [...savedNotes];
+            updatedNotes.splice(index, 1);
+  
+            try {
+              await AsyncStorage.setItem('@note-list', JSON.stringify(updatedNotes));
+              setSavedNotes(updatedNotes);
+            } catch (e) {
+              console.error('Error deleting note: ', e.message);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+  
 
   const handleEditNote = (index) => {
     Alert.alert(
@@ -100,25 +104,35 @@ const Note = () => {
     );
   };
 
-  const handleUndone = (index, note) => {
-    Alert.alert(
-      'Selesai Travelling',
-      'Apakah Anda sudah selesai travelling?',
-      [
-        {
-          text: 'Belum',
-          style: 'cancel',
-        },
-        {
-          text: 'Selesai',
-          onPress: () => {
-            navigation.navigate('History', { undoneNote: note, savedNotes });
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+  const getTaskList = async () => {
+    const storedNotes = await getStorageData();
+    setSavedNotes(storedNotes);
   };
+  
+
+  const handleStatusChange = async (item, index) => {
+    const allList = await getStorageData();
+    var tempIndex = allList.findIndex(el => el.title == item.title);
+    allList[tempIndex].isCompleted = !allList[tempIndex].isCompleted;
+    try {
+        AsyncStorage.setItem('@task-list', JSON.stringify(allList));
+        navigation.navigate('History', { completedTask: history });
+        getTaskList();
+    } catch (e) {
+        console.log('Error update status task: in task-all.js');
+        console.error(e.message);
+    }
+  };
+
+  useEffect(() => {
+    const loadNotes = async () => {
+      const storedNotes = await getStorageData();
+      setSavedNotes(storedNotes);
+    };
+
+    loadNotes();
+  }, []);  
+
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('id-ID', {
@@ -144,6 +158,26 @@ const Note = () => {
     const match = note.match(regex);
     return match ? match[1] : '';
   };
+
+  const renderItem = ({ item, index }) => (
+    <View style={[styles.noteItem, { backgroundColor: 'white' }]}>
+      <NoteRow label="Tujuan Travelling" value={getNoteValue(item, 'Tujuan Travelling')} />
+      <NoteRow label="Budget" value={`${getNoteValue(item, 'Budget')}`} />
+      <NoteRow label="Kebutuhan Travelling" value={getNoteValue(item, 'Kebutuhan Travelling')} />
+      <NoteRow label="Tanggal" value={getNoteValue(item, 'Tanggal')} />
+      <View style={styles.noteButtonsContainer}>
+      <View style={styles.noteButton}>
+        <Button title="Edit" onPress={() => handleEditNote(index)} color="#3498db" />
+      </View>
+      <View style={styles.noteButton}>
+        <Button title="Done" onPress={() => handleStatusChange(index, item)} color="#e74c3c" />
+      </View>
+      <View style={styles.noteButton}>
+        <Button title="Delete" onPress={() => handleDeleteNote(index)} color="#c0392b" />
+      </View>
+    </View>
+    </View>
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -198,22 +232,7 @@ const Note = () => {
           <FlatList
             data={savedNotes}
             keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item, index }) => (
-              <View style={[styles.noteItem, { backgroundColor: 'white' }]}>
-                <NoteRow label="Tujuan Travelling" value={getNoteValue(item, 'Tujuan Travelling')} />
-                <NoteRow label="Budget" value={`${getNoteValue(item, 'Budget')}`} />
-                <NoteRow label="Kebutuhan Travelling" value={getNoteValue(item, 'Kebutuhan Travelling')} />
-                <NoteRow label="Tanggal" value={getNoteValue(item, 'Tanggal')} />
-                <View style={styles.noteButtonsContainer}>
-                  <View style={styles.noteButton}>
-                    <Button title="Edit" onPress={() => handleEditNote(index)} color="#3498db" />
-                  </View>
-                  <View style={styles.noteButton}>
-                    <Button title="Done" onPress={() => handleUndone(index, item)} color="#e74c3c" />
-                  </View>
-                </View>
-              </View>
-            )}
+            renderItem={renderItem}
           />
         </View>
       </View>
@@ -301,7 +320,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   noteButton: {
-    width: '48%', // Sesuaikan lebar sesuai kebutuhan
+    width: '30%', // Sesuaikan lebar sesuai kebutuhan
   },
 });
 
