@@ -84,13 +84,17 @@ const styles = StyleSheet.create({
     color: "white",
   },
   noteItem: {
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "green",
     padding: 20,
     marginVertical: 8,
     marginHorizontal: 20,
     borderRadius: 10,
   },
   noteText: {
+    justifyContent: "center",
+    alignContent: "center",
+    color: "white",
+    alignItems: "center",
     fontSize: 18,
   },
 });

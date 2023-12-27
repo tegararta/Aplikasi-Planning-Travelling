@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, StyleSheet, Button } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute, useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 
 const NoteDetails = () => {
   const [note, setNote] = useState(null);
@@ -35,40 +36,38 @@ const NoteDetails = () => {
   const handleStatusChange = async () => {
     const storedNotes = await AsyncStorage.getItem("@note-list");
     if (storedNotes) {
-        let notesArray = JSON.parse(storedNotes);
+      let notesArray = JSON.parse(storedNotes);
 
-        // Find the note and update its status to "Done"
-        const updatedNotesArray = notesArray.map(note => {
-            if (note.id === noteId) {
-                return { ...note, status: "Done" };
-            }
-            return note;
-        });
+      // Find the note and update its status to "Done"
+      const updatedNotesArray = notesArray.map((note) => {
+        if (note.id === noteId) {
+          return { ...note, status: "Done" };
+        }
+        return note;
+      });
 
-        // Filter out the completed note and remove its ID
-        const completedNote = updatedNotesArray.find(note => note.id === noteId && note.status === "Done");
-        const completedNoteWithoutId = { ...completedNote };
-        delete completedNoteWithoutId.id; // Remove the id from the completed note
+      // Filter out the completed note and remove its ID
+      const completedNote = updatedNotesArray.find((note) => note.id === noteId && note.status === "Done");
+      const completedNoteWithoutId = { ...completedNote };
+      delete completedNoteWithoutId.id; // Remove the id from the completed note
 
-        // Get the existing completed notes
-        const storedCompletedNotes = await AsyncStorage.getItem("@completed-note-list");
-        let completedNotes = storedCompletedNotes ? JSON.parse(storedCompletedNotes) : [];
-        
-        // Add the new completed note
-        completedNotes.push(completedNoteWithoutId);
+      // Get the existing completed notes
+      const storedCompletedNotes = await AsyncStorage.getItem("@completed-note-list");
+      let completedNotes = storedCompletedNotes ? JSON.parse(storedCompletedNotes) : [];
 
-        // Filter out the completed notes from the original notes array
-        const remainingNotes = updatedNotesArray.filter(note => note.id !== noteId);
+      // Add the new completed note
+      completedNotes.push(completedNoteWithoutId);
 
-        // Update AsyncStorage with the new lists
-        await AsyncStorage.setItem("@completed-note-list", JSON.stringify(completedNotes));
-        await AsyncStorage.setItem("@note-list", JSON.stringify(remainingNotes));
+      // Filter out the completed notes from the original notes array
+      const remainingNotes = updatedNotesArray.filter((note) => note.id !== noteId);
 
-        navigation.goBack();
+      // Update AsyncStorage with the new lists
+      await AsyncStorage.setItem("@completed-note-list", JSON.stringify(completedNotes));
+      await AsyncStorage.setItem("@note-list", JSON.stringify(remainingNotes));
+
+      navigation.goBack();
     }
-};
-
-
+  };
 
   const handleDelete = async () => {
     try {
@@ -111,10 +110,11 @@ const NoteDetails = () => {
         <Text style={styles.itemLabel}>Tanggal: </Text>
         {note.ttl}
       </Text>
+
       <View style={styles.buttonsContainer}>
-        <Button title="Delete" onPress={handleDelete} color="#ff6347" />
-        <Button title="Edit" onPress={handleEdit} color="#4682b4" />
-        <Button title="Done" onPress={handleStatusChange} color="#4682b4" />
+        <Ionicons name="pencil-outline" size={24} color="black" onPress={handleEdit} />
+        <Ionicons name="trash-outline" size={24} color="red" onPress={handleDelete} />
+        <Ionicons name="checkmark-circle-outline" size={24} color="green" onPress={handleStatusChange} />
       </View>
     </View>
   );
